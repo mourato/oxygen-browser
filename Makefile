@@ -9,10 +9,10 @@ UPSTREAM_REMOTE ?= upstream
 UPSTREAM_BRANCH ?= main
 
 SUBMODULE_DIR := $(PLATFORM_DIR)/helium-chromium
-HE = cd "$(PLATFORM_DIR)" && bash -c '. ./dev.sh && he "$$@"' ./dev.sh
+HE = cd "$(PLATFORM_DIR)" && zsh -c 'source ./dev.sh && he "$$@"' he
 
 .DEFAULT_GOAL := help
-.PHONY: help check upstream sync setup refresh build run validate pop push
+.PHONY: help check upstream sync setup configure refresh build run validate pop push
 
 help: ## List available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | \
@@ -37,6 +37,9 @@ sync: ## Point the platform submodule at this repo's HEAD (patches must be unmer
 
 setup: sync ## First-time platform setup: download sources, apply patches, configure
 	$(HE) setup
+
+configure: ## Generate build configuration and tools
+	$(HE) configure
 
 refresh: ## Re-apply committed patches to the source tree (pop, sync, push)
 	-$(HE) pop
