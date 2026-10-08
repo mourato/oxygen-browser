@@ -7,6 +7,9 @@
 PLATFORM_DIR ?= $(abspath $(CURDIR)/../helium-macos)
 UPSTREAM_REMOTE ?= upstream
 UPSTREAM_BRANCH ?= main
+# Chromium tooling needs Python >= 3.11; Homebrew keeps unversioned python3 in libexec.
+PYTHON_BIN ?= /opt/homebrew/opt/python@3.13/libexec/bin
+export PATH := $(PYTHON_BIN):$(PATH)
 
 SUBMODULE_DIR := $(PLATFORM_DIR)/helium-chromium
 HE = cd "$(PLATFORM_DIR)" && zsh -c 'source ./dev.sh && he "$$@"' he
