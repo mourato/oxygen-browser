@@ -264,7 +264,6 @@ helium/hop/setup.patch
 helium/hop/disable-password-manager.patch
 
 helium/ui/layout-constants.patch
-helium/ui/layout-provider.patch
 helium/ui/update-cr-components.patch
 helium/ui/always-use-better-ntp.patch
 helium/ui/clean-new-tab-page.patch
@@ -274,14 +273,11 @@ helium/ui/location-bar-page-action.patch
 helium/ui/tabs.patch
 helium/ui/tab-icon.patch
 helium/ui/tab-favicon-retention.patch
-helium/ui/tab-strip-controls.patch
 helium/ui/toolbar.patch
 helium/ui/remove-toolbar-dividers.patch
 helium/ui/toolbar-window-frame-hit-test.patch
 helium/ui/toolbar-button-prefs.patch
 helium/ui/tab-search-in-toolbar.patch
-helium/ui/omnibox.patch
-helium/ui/app-menu-style.patch
 helium/ui/app-menu-model.patch
 helium/ui/app-menu-button.patch
 helium/ui/remove-reading-list-from-app-menu.patch
@@ -300,24 +296,19 @@ helium/ui/clean-up-installed-extension-bubble.patch
 helium/ui/add-specific-error-for-disabled-extension-downloads.patch
 helium/ui/selected-keyword-view.patch
 helium/ui/bookmark-button-bg-fix.patch
-helium/ui/restyle-ntp-tiles.patch
 helium/ui/side-panel-webui-general.patch
 helium/ui/side-panel-webui-customize.patch
 helium/ui/helium-logo-icons.patch
-helium/ui/square-ntp-monograms.patch
 helium/ui/default-theme.patch
 helium/ui/toast.patch
-helium/ui/square-interstitial-buttons.patch
 helium/ui/center-window-on-launch.patch
 helium/ui/remove-devtools-annoyances.patch
 helium/ui/remove-google-promotional-resources.patch
-helium/ui/bookmarks-bar-padding.patch
 helium/ui/profile-picker-cleanup.patch
 helium/ui/disable-tab-group-editor-footer.patch
 helium/ui/profile-customization-cleanup.patch
 helium/ui/bangs-ui.patch
 helium/ui/infobar.patch
-helium/ui/reduce-text-button-height.patch
 helium/ui/pwa-toolbar.patch
 helium/ui/helium-color-mixers.patch
 helium/ui/frame-background.patch
@@ -369,3 +360,7 @@ helium/ui/compact-debugger-warning.patch
 helium/ui/progress-bar.patch
 helium/ui/exclusive-access-bubble.patch
 helium/ui/hide-page-actions-flag.patch
+oxygen/ui/restore-chromium-spacing.patch
+oxygen/ui/restore-location-bar.patch
+oxygen/ui/restore-bubbles.patch
+oxygen/ui/restore-webui-radius.patch

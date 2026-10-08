@@ -1,0 +1,112 @@
+--- a/chrome/browser/ui/views/location_bar/icon_label_bubble_view.cc
++++ b/chrome/browser/ui/views/location_bar/icon_label_bubble_view.cc
+@@ -590,9 +590,7 @@
+   if (radii_.has_value()) {
+     return radii_.value();
+   }
+-
+-  // location bar rounding is 8px and padding is 2px, so inner rounding is 6px
+-  return gfx::RoundedCornersF(6.0f);
++  return gfx::RoundedCornersF(GetPreferredSize().height() / 2);
+ }
+ 
+ void IconLabelBubbleView::SetCornerRadii(const gfx::RoundedCornersF& radii) {
+@@ -810,12 +808,12 @@
+   highlight_bounds = GetMirroredRect(highlight_bounds);
+ 
+   const SkRect rect = RectToSkRect(highlight_bounds);
+-  const float layout_radius = static_cast<float>(
+-      GetLayoutConstant(LayoutConstant::kLocationBarChildCornerRadius));
+-  const SkVector sk_radii[4] = {{layout_radius, layout_radius},
+-                                  {layout_radius, layout_radius},
+-                                  {layout_radius, layout_radius},
+-                                  {layout_radius, layout_radius}};
++  gfx::RoundedCornersF radii = GetCornerRadii();
++  const SkVector sk_radii[4] = {{radii.upper_left(), radii.upper_left()},
++                                {radii.upper_right(), radii.upper_right()},
++                                {radii.lower_right(), radii.lower_right()},
++                                {radii.lower_left(), radii.lower_left()}};
++
+   return SkPath::RRect(SkRRect::MakeRectRadii(rect, sk_radii));
+ }
+ 
+--- a/chrome/browser/ui/views/location_bar/location_bar_view.cc
++++ b/chrome/browser/ui/views/location_bar/location_bar_view.cc
+@@ -180,7 +180,7 @@
+ }
+ 
+ // The padding between intent chips and other trailing decorations.
+-constexpr int kIntentChipIntraItemPadding = 4;
++constexpr int kIntentChipIntraItemPadding = 8;
+ 
+ // The padding between the content setting icons and other trailing decorations.
+ constexpr int kContentSettingIntraItemPadding = kIntentChipIntraItemPadding;
+@@ -257,10 +257,7 @@
+                  !v->GetOmniboxController()->IsPopupOpen();
+         }));
+     views::FocusRing::Get(this)->SetOutsetFocusRingDisabled(true);
+-
+-    // Same radius as the location bar.
+-    views::InstallRoundRectHighlightPathGenerator(
+-        this, gfx::Insets(), GetBorderRadius());
++    views::InstallPillHighlightPathGenerator(this);
+ 
+ #if BUILDFLAG(OS_LEVEL_GEOLOCATION_PERMISSION_SUPPORTED)
+     if (features::IsOsLevelGeolocationPermissionSupportEnabled()) {
+@@ -567,7 +564,7 @@
+ // static
+ int LocationBarView::ComputeBorderRadius(gfx::Size size) {
+   return ChromeLayoutProvider::Get()->GetCornerRadiusMetric(
+-      views::Emphasis::kHigh, size);
++      views::Emphasis::kMaximum, size);
+ }
+ 
+ // static
+@@ -820,9 +817,9 @@
+   // TODO(manukh): Move constants to layout_constants.cc.
+   // The padding between the left edges of the location bar and the LHS icon,
+   // e.g. the page info icon, the google G icon, the selected suggestion icon.
+-  int icon_left = 2;
++  int icon_left = 5;
+   // The padding between the LHS icon and the text.
+-  int text_left = 5;
++  int text_left = 8;
+ 
+   // Apply indentation to align the omnibox input icon and the text with those
+   // of the suggestions in the popup. However, there are two exceptions where
+@@ -841,22 +838,22 @@
+                              !location_icon_view_->ShouldShowLabel() &&
+                              !ShouldShowKeywordBubble();
+   if (should_indent) {
+-    icon_left += 0 /*icon_indent*/;
++    icon_left += 7 /*icon_indent*/;
+     icon_left += omnibox_feature_configs::AdjustOmniboxIndent()
+                      .Get()
+                      .input_icon_indent_offset;
+-    text_left += 0 /*text_indent*/;
++    text_left += 6 /*text_indent*/;
+     text_left += omnibox_feature_configs::AdjustOmniboxIndent()
+                      .Get()
+                      .input_text_indent_offset;
+   } else if (ShouldShowKeywordBubble()) {
+     // Otherwise, if in keyword mode, adjust indentation to align the icon and
+     // the text with the suggestion icons & texts.
+-    icon_left += 0; /*icon_indent_keyword_mode*/
++    icon_left += 9; /*icon_indent_keyword_mode*/
+     icon_left += omnibox_feature_configs::AdjustOmniboxIndent()
+                      .Get()
+                      .input_icon_indent_offset;
+-    text_left += 0; /*text_indent_keyword_mode*/
++    text_left += -9; /*text_indent_keyword_mode*/
+   }
+ 
+   LocationBarLayout leading_decorations(LocationBarLayout::Position::kLeftEdge,
+@@ -1437,7 +1434,7 @@
+ }
+ 
+ gfx::Rect LocationBarView::GetLocalBoundsWithoutEndcaps() const {
+-  const int border_radius = GetBorderRadius();
++  const int border_radius = height() / 2;
+   gfx::Rect bounds_without_endcaps(GetLocalBounds());
+   bounds_without_endcaps.Inset(gfx::Insets::VH(0, border_radius));
+   return bounds_without_endcaps;

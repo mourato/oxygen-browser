@@ -1,0 +1,162 @@
+--- a/chrome/browser/ui/toasts/toast_view.cc
++++ b/chrome/browser/ui/toasts/toast_view.cc
+@@ -49,7 +49,6 @@
+ constexpr int kAnimationEntryDuration = 300;
+ constexpr int kAnimationExitDuration = 150;
+ constexpr float kAnimationHeightScale = 0.5;
+-constexpr int kBubbleCornerRadius = 8;
+ constexpr int kBubbleStrokeWidth = 1;
+ constexpr ui::ColorId kToastForegroundColorId =
+     kColorTabForegroundActiveFrameActive;
+@@ -125,7 +124,8 @@
+   SetBackgroundColor(ui::kColorSysOmniboxContainer);
+   SetShowCloseButton(false);
+   DialogDelegate::SetButtons(static_cast<int>(ui::mojom::DialogButton::kNone));
+-  set_corner_radius(kBubbleCornerRadius);
++  set_corner_radius(ChromeLayoutProvider::Get()->GetDistanceMetric(
++      DISTANCE_TOAST_BUBBLE_HEIGHT));
+   SetProperty(views::kElementIdentifierKey, kToastElementId);
+   set_close_on_deactivate(false);
+   SetProperty(views::kElementIdentifierKey, kToastViewId);
+@@ -148,7 +148,8 @@
+   SetBackgroundColor(ui::kColorSysOmniboxContainer);
+   SetShowCloseButton(false);
+   DialogDelegate::SetButtons(static_cast<int>(ui::mojom::DialogButton::kNone));
+-  set_corner_radius(kBubbleCornerRadius);
++  set_corner_radius(ChromeLayoutProvider::Get()->GetDistanceMetric(
++      DISTANCE_TOAST_BUBBLE_HEIGHT));
+   SetProperty(views::kElementIdentifierKey, kToastElementId);
+   set_close_on_deactivate(false);
+   SetProperty(views::kElementIdentifierKey, kToastViewId);
+@@ -197,7 +198,10 @@
+   views::ClientView* client_view =
+       BubbleDialogDelegateView::CreateClientView(widget);
+   client_view->SetBorder(views::CreateRoundedRectBorder(
+-    kBubbleStrokeWidth, kBubbleCornerRadius, kColorToolbarSeparator));
++    kBubbleStrokeWidth,
++    ChromeLayoutProvider::Get()->GetDistanceMetric(
++        DISTANCE_TOAST_BUBBLE_HEIGHT),
++    kColorToolbarSeparator));
+   return client_view;
+ }
+ 
+--- a/chrome/browser/ui/views/chrome_layout_provider.cc
++++ b/chrome/browser/ui/views/chrome_layout_provider.cc
+@@ -206,27 +206,27 @@
+       return 6;
+     case DISTANCE_TOAST_BUBBLE_BETWEEN_LABEL_ACTION_BUTTON_SPACING:
+     case DISTANCE_TOAST_BUBBLE_BETWEEN_LABEL_MENU_BUTTON_SPACING:
+-      return 14;
++      return 16;
+     case DISTANCE_TOAST_BUBBLE_HEIGHT:
+-      return 32;
++      return 48;
+     case DISTANCE_TOAST_BUBBLE_HEIGHT_ACTION_BUTTON:
+-      return 28;
++      return 36;
+     case DISTANCE_TOAST_BUBBLE_HEIGHT_CONTENT:
+       return 24;
+     case DISTANCE_TOAST_BUBBLE_ICON_SIZE:
+     case DISTANCE_TOAST_BUBBLE_MENU_ICON_SIZE:
+-      return 18;
++      return 20;
+     case DISTANCE_TOAST_BUBBLE_LEADING_ICON_SIDE_MARGINS:
+       return 2;
+     case DISTANCE_TOAST_BUBBLE_MARGIN_LEFT:
+-      return 10;
++      return 12;
+     case DISTANCE_TOAST_BUBBLE_MARGIN_RIGHT_ACTION_BUTTON:
+       return 6;
+     case DISTANCE_TOAST_BUBBLE_MARGIN_RIGHT_CLOSE_BUTTON:
+     case DISTANCE_TOAST_BUBBLE_MARGIN_RIGHT_MENU_BUTTON:
+       return 10;
+     case DISTANCE_TOAST_BUBBLE_MARGIN_RIGHT_LABEL:
+-      return 14;
++      return 16;
+     case DISTANCE_RECENT_ACTIVITY_AVATAR_SIZE:
+       return 32;
+     case DISTANCE_RECENT_ACTIVITY_AVATAR_FALLBACK_SIZE:
+--- a/components/fullscreen_control/subtle_notification_view.cc
++++ b/components/fullscreen_control/subtle_notification_view.cc
+@@ -30,33 +30,33 @@
+ #include "ui/views/widget/widget.h"
+ namespace {
+ 
+-const int kBubbleCornerRadius = 12;
+-
+ // Space between the site info label.
+ const int kMiddlePaddingPx = 30;
+ 
+-const int kOuterPaddingHorizPx = 16;
++const int kOuterPaddingHorizPx = 40;
+ const int kOuterPaddingVertPx = 8;
+ 
+ // Spacing around the key name.
+-const int kKeyNameMarginHorizPx = 4;
++const int kKeyNameMarginHorizPx = 7;
+ const int kKeyNameBorderPx = 1;
+-const int kKeyNameCornerRadius = 6;
+-const int kKeyNamePaddingVertPx = 2;
+-const int kKeyNamePaddingHorizPx = 4;
++const int kKeyNameCornerRadius = 2;
++const int kKeyNamePaddingPx = 5;
+ 
+ // Spacing between the key name and image, if any.
+ const int kKeyNameImageSpacingPx = 3;
+ 
+-// The context used to obtain typography for the instruction text.
+-constexpr int kInstructionTextContext = views::style::CONTEXT_DIALOG_BODY_TEXT;
++// The context used to obtain typography for the instruction text. It's not
++// really a dialog, but a dialog title is a good fit.
++constexpr int kInstructionTextContext = views::style::CONTEXT_DIALOG_TITLE;
+ 
+ // Delimiter indicating there should be a segment displayed as a keyboard key.
+ constexpr char16_t kKeyNameDelimiter[] = u"|";
+ 
+ // Returns the background color to use for the notification.
+ ui::ColorId GetSubtleNotificationBackgroundColor() {
+-  return color::kFullscreenNotificationOpaqueBackgroundColor;
++  return base::FeatureList::IsEnabled(features::kFullscreenBubbleShowOpaque)
++             ? color::kFullscreenNotificationOpaqueBackgroundColor
++             : color::kFullscreenNotificationTransparentBackgroundColor;
+ }
+ 
+ }  // namespace
+@@ -162,11 +162,6 @@
+     const std::u16string& text,
+     bool format_as_key,
+     std::unique_ptr<views::View> key_image) {
+-  // Avoid extra trailing spacing if there are no trailing items.
+-  if (!format_as_key && text.empty()) {
+-    return;
+-  }
+-
+   constexpr SkColor kForegroundColor = SK_ColorWHITE;
+ 
+   views::Label* label = new views::Label(text, kInstructionTextContext);
+@@ -180,15 +175,11 @@
+   }
+ 
+   views::View* key = new views::View;
+-  // Use the font's vertical whitespace for the border, keeping the text offset.
+   auto key_name_layout = std::make_unique<views::BoxLayout>(
+       views::BoxLayout::Orientation::kHorizontal,
+-      gfx::Insets::TLBR(-kKeyNameBorderPx, kKeyNamePaddingHorizPx,
+-                        kKeyNamePaddingVertPx - kKeyNameBorderPx,
+-                        kKeyNamePaddingHorizPx),
+-      kKeyNameImageSpacingPx);
++      gfx::Insets::VH(0, kKeyNamePaddingPx), kKeyNameImageSpacingPx);
+   key_name_layout->set_minimum_cross_axis_size(
+-      label->GetPreferredSize({}).height());
++      label->GetPreferredSize({}).height() + kKeyNamePaddingPx * 2);
+   key->SetLayoutManager(std::move(key_name_layout));
+   if (key_image)
+     key->AddChildView(std::move(key_image));
+@@ -214,7 +205,6 @@
+   auto bubble_border = std::make_unique<views::BubbleBorder>(
+       views::BubbleBorder::NONE, views::BubbleBorder::NO_SHADOW);
+   bubble_border->SetColor(GetSubtleNotificationBackgroundColor());
+-  bubble_border->set_rounded_corners(gfx::RoundedCornersF(kBubbleCornerRadius));
+   SetBackground(std::make_unique<views::BubbleBackground>(bubble_border.get()));
+   SetBorder(std::move(bubble_border));
+ 
